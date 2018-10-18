@@ -7,6 +7,9 @@ import App from './App'
 import router from './router'
 // Vue.use(VueTabs)
 import VModal from 'vue-js-modal'
+import Spinner from 'vue-spinkit'
+
+Vue.component('Spinner', Spinner)
 
 Vue.use(VModal)
 
