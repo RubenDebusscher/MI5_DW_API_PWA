@@ -1,7 +1,12 @@
-Sept 2018: Creation API
+# Timesheet
+## Sept 2018 - xx uur
+* Creation API - xx uur
 
-18/10/2018: Managed to show a modal when clicked
+## 18/10/2018 - xx uur
+* Managed to show a modal when clicked - XX uur
 
-21/10/2018: Created API Files and added data
+## 21/10/2018 - xx uur
+* Created API Files and added data - xx uur
 
-24/10/2018:Issue Management
+## 24/10/2018 - xx uur
+* Issue Management - xx uur
