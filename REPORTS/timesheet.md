@@ -3,6 +3,8 @@
 * Creation API - xx uur
 
 ## 18/10/2018 - xx uur
+* Learn vue.js - xx uur
+* wikihow vue.js - xx uur
 * Managed to show a modal when clicked - XX uur
 
 ## 21/10/2018 - xx uur
