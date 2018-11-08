@@ -10,10 +10,14 @@
       <section>
         <h1>Serials</h1>
         <Spinner name="pacman" color="red" id="Spinner"/>
-        <a class="Serial" v-for="serial in serials" :key="serial.id" @click='show(serial.id,serial.title,serial.image)'>
+        <a class="Serial" v-for="serial in serials" :key="serial.id" v-on:click='show(serial.id,serial.title,serial.image)'>
           <div class="item" v-bind:id="serial.id">
-            <img class="img-fluid" v-bind:src="serial.image" v-bind:alt="serial.title">
-            <span>{{serial.season}}.{{serial.part}}: {{serial.title}}</span>
+            <div class="Item_Image">
+              <img class="img-fluid" v-bind:src="serial.image" v-bind:alt="serial.title">
+            </div>
+            <div class="Item_Title">
+              <span>{{serial.season}}.{{serial.part}}: {{serial.title}}</span>
+            </div>
           </div>
         </a>
       </section>
@@ -23,21 +27,42 @@
     </div>
    <modal name="size-modal" transition="nice-modal-fade" classes="demo-modal-class" :z-index="5" :min-width="400" :min-height="200" :pivot-y="0.5" :adaptive="true" :scrollable="true" :reset="true" width="60%" height="auto">
         <div class="size-modal-content">
-          <h1 id="EpisodeTitel">{{title}}</h1><div class="heart-shape"></div>
-          <img class="wikifoto" alt="hier komt de (cover)foto"/>
+          <img class="wikifoto" v-bind:alt="AltCover" v-bind:src="CoverSrc"/>
+          <h1 v-html="EpisodeTitel"></h1>
+          <div id ="Counter_Div">
+            <span id="Counter">0</span>
+            <div class="heart-shape"></div>
+          </div>
+          <table id="Afleveringen">
+            <tr>
+              <td>Aflevering</td>
+              <td>Runtime</td>
+              <td>Airdate</td>
+              <td>UK viewers</td>
+            </tr>
+            <tr v-for="episode in Episodes" :key="episode.id">
+              <td>{{episode.title}}</td>
+              <td>{{episode.runtime}}</td>
+              <td>{{episode.original_air_date}}</td>
+              <td>{{episode.uk_viewers_mm}}.000.000</td>
+            </tr>
+          </table>
         </div>
       </modal>
   </div>
 </template>
 <script>
 import axios from 'axios'
-
+import $ from 'jquery'
 export default {
   data () {
     return {
-      title: 'Dit is de titel',
       serials: [],
-      Doctors: []
+      Doctors: [],
+      Episodes:[],
+      EpisodeTitel:"Titel",
+      AltCover:"Dit is alt",
+      CoverSrc: "https://www.doctorwhofans.be/favicon.ico"
     }
   },
   methods: {
@@ -46,9 +71,22 @@ export default {
     },
     show (id, titel, image) {
       var self = this
-      self.$modal.value.title = titel
-      self.$modal.image = image
+
+      self.EpisodeTitel = titel
+      self.AltCover = titel
+      self.CoverSrc = image
+      console.log($)
+
       self.$modal.show('size-modal')
+
+      axios.get('https://www.doctorwhofans.be/API/EpisodesbySerial.php?id='+id)
+      .then(function GetEpisodes(res) {
+        self.Episodes = res.data.Episodes
+        //console.log('Data: ', res.data.Episodes)
+      })
+      .catch(function (error) {
+        console.log('Error: ', error)
+      })
     },
     hide () {
       var self = this
@@ -75,10 +113,22 @@ export default {
       })
   }
 }
+$(document).ready(function () {
+  setTimeout($('#Spinner').hide(), 2000)
+})
 </script>
 <!-- Add "scoped" attribute to limit CSS to this component only -->
 <style scoped>
-.wikifoto{display:inline-flex;float:right;}
+.Item_Image{    display: block;
+    overflow: hidden;
+    max-height: 11em;}
+.Item_Title{display: block}
+
+.wikifoto{display: inline-block;
+    float: right;
+    width: 38%;
+    min-height: 14em;
+    border: 1px solid;}
 .Serial{    display: inline-block;background-color: #206090;
     width: 9em;
     height: 16em;border-radius: 5px;
@@ -94,7 +144,7 @@ a {
 section{margin-top: 5em;}
 .Serial span{margin-top: 6%;
     display: block;}
-img{max-width: 96% ;height: 10em;margin-top: 2px}
+img{width: 100% ;}
 .size-modal-content {
     padding: 10px;
     font-style: 13px;
@@ -110,10 +160,15 @@ img{max-width: 96% ;height: 10em;margin-top: 2px}
     background: #F7F7F7;
     box-shadow: 5px 5px 30px 0px rgba(46,61,73, 0.6);
   }
+  table{width: 100%;display: inline-block;}
+  th,tr{width: 100%;}
+  tr:first td{font-weight: bold}
+  td{width: 41%}
+  #Counter_Div{float: right;clear: both;}
   /*Heart shape*/
   .heart-shape{
   position: relative;
-  margin-left: 2em;
+  display: inline-block;
   width: 10px;
   height: 10px;
   background-color: red;
