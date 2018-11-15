@@ -1,36 +1,52 @@
 <template>
   <div>
     <div>
-      <section>
-        <select name="Doctors" @change="showDoctor">
-          <option id="All" key="All" value="All">All</option>
-          <option v-for="Doctor in Doctors" :key="Doctor.id" :value="Doctor.id" v-bind:id="Doctor.id">{{Doctor.incarnation}}</option>
-        </select>
-      </section>
-      <section>
+      <article id='first_Article'>
         <h1>Serials</h1>
-        <Spinner name="pacman" color="red" id="Spinner"/>
-        <a class="Serial" v-for="serial in serials" :key="serial.id" v-on:click='show(serial.id,serial.title,serial.image)'>
-          <div class="item" v-bind:id="serial.id">
-            <div class="Item_Image">
-              <img v-if="serial.image !=''" class="img-fluid" v-bind:src="serial.image" v-bind:alt="serial.title">
-              <img v-else class="img-fluid" src="https://www.doctorwhofans.be/favicon.ico" v-bind:alt="serial.title">
+        <section>
+          <section>
+            <select name="Doctors" @change="showDoctor">
+              <option id="All" key="All" value="All">All</option>
+              <option v-for="Doctor in Doctors" :key="Doctor.id" :value="Doctor.id" v-bind:id="Doctor.id">{{Doctor.incarnation}}</option>
+            </select>
+          </section>
+          <Spinner name="pacman" color="red" id="Spinner"/>
+          <a class="Serial" v-for="serial in serials" :key="serial.id" v-on:click='show(serial.id,serial.title,serial.image,serial.external_link)'>
+            <div class="item" v-bind:id="serial.id">
+              <div class="Item_Image">
+                <img v-if="serial.image !=''" class="img-fluid" v-bind:src="serial.image" v-bind:alt="serial.title">
+                <img v-else class="img-fluid" src="https://www.doctorwhofans.be/favicon.ico" v-bind:alt="serial.title">
+              </div>
+              <div class="Item_Title">
+                <span>{{serial.season}}.{{serial.part}}: {{serial.title}}</span>
+              </div>
             </div>
-            <div class="Item_Title">
-              <span>{{serial.season}}.{{serial.part}}: {{serial.title}}</span>
-            </div>
-          </div>
-        </a>
-      </section>
-      <section>
+          </a>
+        </section>
+      </article>
+      <article>
         <h1>Books</h1>
-      </section>
+      </article>
+      <article>
+        <h1>Audio</h1>
+      </article>
+      <article>
+        <h1>Magazines</h1>
+      </article>
     </div>
    <modal name="size-modal" transition="nice-modal-fade" classes="demo-modal-class" :z-index="5" :min-width="400" :min-height="200" :pivot-y="0.5" :adaptive="true" :scrollable="true" :reset="true" width="60%" height="auto">
         <div class="size-modal-content">
           <img v-if="CoverSrc !=''" class="wikifoto" v-bind:alt="AltCover" v-bind:src="CoverSrc"/>
           <img v-else  class="wikifoto" v-bind:alt="AltCover" src="https://www.doctorwhofans.be/favicon.ico"/>
-          <h1 v-html="EpisodeTitel"></h1>
+          <h1><a v-bind:href="Link" v-html="EpisodeTitel" target="_blank"></a></h1>
+          <h2>Doctor(s)</h2>
+          <ul>
+            <li v-for="Doctor in DoctorsforEpisode" :key="Doctor.doctor_id">{{Doctor.incarnation}}</li>
+          </ul>
+          <h2>Companions</h2>
+          <ul>
+            <li v-for="Companion in CompanionsforEpisode" :key="Companion.companion_id">{{Companion.personage}}</li>
+          </ul>
           <div id ="Counter_Div">
             <span id="Counter">0</span>
             <div class="heart-shape"></div>
@@ -41,16 +57,23 @@
               <th>Runtime</th>
               <th>Airdate</th>
               <th>UK viewers</th>
+              <th>AI</th>
             </tr>
             <tr v-for="episode in Episodes" :key="episode.id">
               <td v-if="episode.missing==1&& episode.recreated==0" style="background-color:red;color:white">{{episode.title}}</td>
-              <td v-if="episode.recreated==1&& episode.missing==1" style="background-color:red;color:white">{{episode.title}} (recreated)</td>
+              <td v-else-if="episode.recreated==1&& episode.missing==1" style="background-color:red;color:white">{{episode.title}} (recreated)</td>
               <td v-else>{{episode.title}}</td>
               <td>{{episode.runtime}}</td>
               <td>{{episode.original_air_date}}</td>
-              <td>{{episode.uk_viewers_mm}}.000.000</td>
+              <td>{{episode.uk_viewers_mm}}</td>
+              <td>{{episode.appreciation_index}}</td>
             </tr>
           </table>
+          <h2>Synopsis</h2>
+          <article v-for="episode in Episodes" :key="episode.id" class="small">
+            <h3>{{episode.title}}</h3>
+            <span>{{episode.synopsis}}</span>
+          </article>
         </div>
       </modal>
   </div>
@@ -64,25 +87,60 @@ export default {
       serials: [],
       Doctors: [],
       Episodes: [],
+      CompanionsforEpisode: [],
+      DoctorsforEpisode: [],
       EpisodeTitel: 'Titel',
       AltCover: 'Dit is alt',
-      CoverSrc: 'https://www.doctorwhofans.be/favicon.ico'
+      CoverSrc: 'https://www.doctorwhofans.be/favicon.ico',
+      Link: '#'
     }
   },
   methods: {
     showDoctor () {
-      console.log(event.target.value)
+      if (event.target.value === 'All') {
+        axios.get('https://www.doctorwhofans.be/API/Serials.php')
+          .then(function getSerials (res) {
+            self.serials = res.data.Serials
+          })
+          .catch(function (error) {
+            console.log('Error: ', error)
+          })
+      } else {
+        axios.get('https://www.doctorwhofans.be/API/SerialsbyDoctor.php?id=' + event.target.value)
+          .then(function getSerials (res) {
+            self.serials = res.data.Serials
+            console.log(self.serials)
+          })
+          .catch(function (error) {
+            console.log('Error: ', error)
+          })
+      }
     },
-    show (id, titel, image) {
+    show (id, titel, image, link) {
       var self = this
       self.EpisodeTitel = titel
       self.AltCover = titel
       self.CoverSrc = image
+      self.Link = link
       self.$modal.show('size-modal')
 
       axios.get('https://www.doctorwhofans.be/API/EpisodesbySerial.php?id=' + id)
         .then(function GetEpisodes (res) {
           self.Episodes = res.data.Episodes
+        })
+        .catch(function (error) {
+          console.log('Error: ', error)
+        })
+      axios.get('https://www.doctorwhofans.be/API/CompanionsforEpisode.php?id=' + id)
+        .then(function GetCompanions (res) {
+          self.CompanionsforEpisode = res.data.Companions
+        })
+        .catch(function (error) {
+          console.log('Error: ', error)
+        })
+      axios.get('https://www.doctorwhofans.be/API/DoctorsforEpisode.php?id=' + id)
+        .then(function GetDoctorsforEpisode (res) {
+          self.DoctorsforEpisode = res.data.DoctorsforEpisode
         })
         .catch(function (error) {
           console.log('Error: ', error)
@@ -147,7 +205,8 @@ $(document).ready(function () {
 a {
   color: #42b983;
 }
-section{margin-top: 5em;}
+#first_Article{padding-top: 5em;}
+.small{margin-top: 0em}
 .Serial span{margin-top: 6%;
     display: block;}
 img{width: 100% ;}
@@ -155,7 +214,7 @@ img{width: 100% ;}
     padding: 10px;
     font-style: 13px;
     background-color: white;
-    width: 80%;
+    width: 98%;
     min-height: 20em;
   }
   .v--modal-overlay[data-modal="size-modal"] {
