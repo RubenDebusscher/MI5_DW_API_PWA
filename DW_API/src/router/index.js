@@ -16,6 +16,10 @@ export default new Router({
       path: '/',
       name: 'Detail',
       component: Detail
+    },
+    {
+      path: '(.*)',
+      url: './manifest.json'
     }
   ]
 })

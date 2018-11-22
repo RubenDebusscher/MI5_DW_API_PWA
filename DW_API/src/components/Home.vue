@@ -5,9 +5,10 @@
         <h1>Serials</h1>
         <section>
           <section>
-            <select name="Doctors" @change="showDoctor">
+            <label for="Doctors">Choose your Doctor:</label>
+            <select id="Doctors" name="Doctors" v-on:change="showDoctor" v-model="Episodes">
               <option id="All" key="All" value="All">All</option>
-              <option v-for="Doctor in Doctors" :key="Doctor.id" :value="Doctor.id" v-bind:id="Doctor.id">{{Doctor.incarnation}}</option>
+              <option v-for="Doctor in Doctors" :key="Doctor.id" :value="Doctor.id" v-bind:id="Doctor.incarnation">{{Doctor.incarnation}}</option>
             </select>
           </section>
           <Spinner name="pacman" color="red" id="Spinner"/>
@@ -49,7 +50,7 @@
           </ul>
           <div id ="Counter_Div">
             <span id="Counter">0</span>
-            <div class="heart-shape"></div>
+            <div class="heart-shape" onclick="Heartclicked"></div>
           </div>
           <table id="Afleveringen">
             <tr>
@@ -81,18 +82,20 @@
 <script>
 import axios from 'axios'
 import $ from 'jquery'
+import Vue from 'vue'
 export default {
   data () {
     return {
       serials: [],
       Doctors: [],
       Episodes: [],
+      selected: 'All',
       CompanionsforEpisode: [],
       DoctorsforEpisode: [],
       EpisodeTitel: 'Titel',
       AltCover: 'Dit is alt',
       CoverSrc: 'https://www.doctorwhofans.be/favicon.ico',
-      Link: '#'
+      Link: '/'
     }
   },
   methods: {
@@ -108,7 +111,13 @@ export default {
       } else {
         axios.get('https://www.doctorwhofans.be/API/SerialsbyDoctor.php?id=' + event.target.value)
           .then(function getSerials (res) {
-            self.serials = res.data.Serials
+            // self.serials = res.data.Serials
+            for (var i = self.serials.length - 1; i >= 0; i--) {
+              Vue.delete(self.serials, i)
+            }
+            for (i = 0; i < res.data.Serials.length; i++) {
+              Vue.$set(self.serials, i, res.data.Serials[i])
+            }
             console.log(self.serials)
           })
           .catch(function (error) {
@@ -151,14 +160,17 @@ export default {
       self.$modal.hide('size-modal')
     }
   },
+  watch () {
+    var self = this
+    // serials: self.serials
+    return self.serials
+  },
   mounted () {
     var self = this
-    if (localStorage.self) {
-      self = localStorage.self
-    }
     axios.get('https://www.doctorwhofans.be/API/Serials.php')
       .then(function getSerials (res) {
         self.serials = res.data.Serials
+        $('#Spinner').hide()
       })
       .catch(function (error) {
         console.log('Error: ', error)
@@ -170,16 +182,8 @@ export default {
       .catch(function (error) {
         console.log('Error: ', error)
       })
-  },
-  watch: {
-    self (newself) {
-      localStorage.self = newself
-    }
   }
 }
-$(document).ready(function () {
-  setTimeout($('#Spinner').hide(), 2000)
-})
 </script>
 <!-- Add "scoped" attribute to limit CSS to this component only -->
 <style scoped>
