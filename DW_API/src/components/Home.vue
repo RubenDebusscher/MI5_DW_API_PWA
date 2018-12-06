@@ -82,7 +82,7 @@
 <script>
 import axios from 'axios'
 import $ from 'jquery'
-import Vue from 'vue'
+// import Vue from 'vue'
 export default {
   data () {
     return {
@@ -111,13 +111,13 @@ export default {
       } else {
         axios.get('https://www.doctorwhofans.be/API/SerialsbyDoctor.php?id=' + event.target.value)
           .then(function getSerials (res) {
-            // self.serials = res.data.Serials
-            for (var i = self.serials.length - 1; i >= 0; i--) {
+            self.serials = res.data.Serials
+            /* for (var i = self.serials.length - 1; i >= 0; i--) {
               Vue.delete(self.serials, i)
             }
             for (i = 0; i < res.data.Serials.length; i++) {
               Vue.$set(self.serials, i, res.data.Serials[i])
-            }
+            } */
             console.log(self.serials)
           })
           .catch(function (error) {
@@ -160,10 +160,8 @@ export default {
       self.$modal.hide('size-modal')
     }
   },
-  watch () {
-    var self = this
-    // serials: self.serials
-    return self.serials
+  watch: {
+    Serials: []
   },
   mounted () {
     var self = this
