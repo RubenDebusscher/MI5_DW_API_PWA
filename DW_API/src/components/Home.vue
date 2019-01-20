@@ -1,22 +1,31 @@
-<template>
+<template @detected-condition="handleConnectivityChange">
   <div>
     <div>
       <article id='first_Article'>
+        <offline @detected-condition="handleConnectivityChange">
+    <!-- Only renders when the device is online -->
+    <!-- Only renders when the device is offline -->
+    <div slot="offline">
+      <p>You appear to be offline, that's okay, we can still do things...  The episode data will not be up to date though.</p>
+    </div>
+  </offline>
         <h1>Serials</h1>
         <section>
           <section>
             <label for="Doctors">Choose your Doctor:</label>
-            <select id="Doctors" name="Doctors" v-on:change="showDoctor" v-model="Episodes">
+            <select id="Doctors" name="Doctors" v-on:change="showDoctor">
               <option id="All" key="All" value="All">All</option>
               <option v-for="Doctor in Doctors" :key="Doctor.id" :value="Doctor.id" v-bind:id="Doctor.incarnation">{{Doctor.incarnation}}</option>
             </select>
           </section>
           <Spinner name="pacman" color="red" id="Spinner"/>
-          <a class="Serial" v-for="serial in serials" :key="serial.id" v-on:click='show(serial.id,serial.title,serial.image,serial.external_link)'>
+          <a class="Serial" v-for="serial in serials" :key="serial.id"
+          v-on:click='show(serial.id,serial.title,serial.image,serial.external_link)'>
             <div class="item" v-bind:id="serial.id">
               <div class="Item_Image">
+                <!-- pas hier een extra if toe om een default te voorzien als de staus offline is-->
                 <img v-if="serial.image !=''" class="img-fluid" v-bind:src="serial.image" v-bind:alt="serial.title">
-                <img v-else class="img-fluid" src="https://www.doctorwhofans.be/favicon.ico" v-bind:alt="serial.title">
+                <img v-else class="img-fluid" src="static/img/favicon.ico" v-bind:alt="serial.title">
               </div>
               <div class="Item_Title">
                 <span>{{serial.season}}.{{serial.part}}: {{serial.title}}</span>
@@ -35,23 +44,34 @@
         <h1>Magazines</h1>
       </article>
     </div>
-   <modal name="size-modal" transition="nice-modal-fade" classes="demo-modal-class" :z-index="5" :min-width="400" :min-height="200" :pivot-y="0.5" :adaptive="true" :scrollable="true" :reset="true" width="60%" height="auto">
+   <modal name="size-modal" transition="nice-modal-fade" classes="demo-modal-class"
+   :z-index="5" :min-width="400" :min-height="200" :pivot-y="0.5" :adaptive="true"
+   :scrollable="true" :reset="true" width="60%" height="auto">
         <div class="size-modal-content">
-          <img v-if="CoverSrc !=''" class="wikifoto" v-bind:alt="AltCover" v-bind:src="CoverSrc"/>
-          <img v-else  class="wikifoto" v-bind:alt="AltCover" src="https://www.doctorwhofans.be/favicon.ico"/>
+          <button v-on:click="CloseModal()">Close</button>
+          <img v-if="CoverSrc !=''" class="wikifoto" v-bind:alt="AltCover"
+          v-bind:src="CoverSrc"/>
+          <img v-else  class="wikifoto" v-bind:alt="AltCover"
+          src="static/img/favicon.ico"/>
           <h1><a v-bind:href="Link" v-html="EpisodeTitel" target="_blank"></a></h1>
           <h2>Doctor(s)</h2>
           <ul>
-            <li v-for="Doctor in DoctorsforEpisode" :key="Doctor.doctor_id">{{Doctor.incarnation}}</li>
+            <li v-for="Doctor in DoctorsforEpisode" :key="Doctor.doctor_id">
+              {{Doctor.incarnation}}
+            </li>
           </ul>
           <h2>Companions</h2>
           <ul>
-            <li v-for="Companion in CompanionsforEpisode" :key="Companion.companion_id">{{Companion.personage}}</li>
+            <li v-for="Companion in CompanionsforEpisode"
+            :key="Companion.companion_id">
+              {{Companion.personage}}
+            </li>
           </ul>
           <div id ="Counter_Div">
             <span id="Counter">0</span>
-            <div class="heart-shape" onclick="Heartclicked"></div>
+            <div class="heart-shape" v-on:click="Heartclicked()"></div>
           </div>
+          <!--voeg hier een if toe voor het geval offline, toon deze data dan niet maar een boodschap-->
           <table id="Afleveringen">
             <tr>
               <th>Aflevering</th>
@@ -82,8 +102,11 @@
 <script>
 import axios from 'axios'
 import $ from 'jquery'
-// import Vue from 'vue'
+import offline from 'v-offline'
 export default {
+  components: {
+    offline
+  },
   data () {
     return {
       serials: [],
@@ -94,12 +117,22 @@ export default {
       DoctorsforEpisode: [],
       EpisodeTitel: 'Titel',
       AltCover: 'Dit is alt',
-      CoverSrc: 'https://www.doctorwhofans.be/favicon.ico',
+      CoverSrc: 'static/img/favicon.ico',
       Link: '/'
     }
   },
   methods: {
+    handleConnectivityChange (status) {
+      var allImages = document.getElementsByTagName('img')
+      for (var i = 0; i < allImages.length; i++) {
+        if (!allImages[i].complete) {
+          allImages[i].src = 'static/img/favicon.ico'
+        }
+      }
+      console.log(status)
+    },
     showDoctor () {
+      var self = this
       if (event.target.value === 'All') {
         axios.get('https://www.doctorwhofans.be/API/Serials.php')
           .then(function getSerials (res) {
@@ -112,13 +145,6 @@ export default {
         axios.get('https://www.doctorwhofans.be/API/SerialsbyDoctor.php?id=' + event.target.value)
           .then(function getSerials (res) {
             self.serials = res.data.Serials
-            /* for (var i = self.serials.length - 1; i >= 0; i--) {
-              Vue.delete(self.serials, i)
-            }
-            for (i = 0; i < res.data.Serials.length; i++) {
-              Vue.$set(self.serials, i, res.data.Serials[i])
-            } */
-            console.log(self.serials)
           })
           .catch(function (error) {
             console.log('Error: ', error)
@@ -158,10 +184,41 @@ export default {
     hide () {
       var self = this
       self.$modal.hide('size-modal')
+    },
+    CloseModal () {
+      var self = this
+      self.$modal.hide('size-modal')
+    },
+    Heartclicked () {
+      // insert click in database
+      // re-get the amount of hearts for selected episode
+      var aantal = parseInt($('#Counter').text(), 10)
+      $('#Counter').text(aantal += 1)
     }
   },
   watch: {
-    Serials: []
+    serials: {
+      handler () {
+        console.log('Serials changed!')
+        localStorage.setItem('serials', JSON.stringify(this.serials))
+      },
+      deep: true
+    },
+    Doctors: {
+      handler () {
+        console.log('Doctors changed!')
+        localStorage.setItem('Doctors', JSON.stringify(this.Doctors))
+      },
+      deep: true
+    },
+    Episodes: {
+      handler () {
+        console.log('Episodes changed!')
+        localStorage.setItem('Episodes', JSON.stringify(this.Episodes))
+      },
+      deep: true
+    },
+    offline
   },
   mounted () {
     var self = this
@@ -180,11 +237,25 @@ export default {
       .catch(function (error) {
         console.log('Error: ', error)
       })
+    console.log('App mounted!')
+    if (localStorage.getItem('serials')) this.serials = JSON.parse(localStorage.getItem('serials'))
+    if (localStorage.getItem('Doctors')) this.Doctors = JSON.parse(localStorage.getItem('Doctors'))
+    if (localStorage.getItem('Episodes')) this.Episodes = JSON.parse(localStorage.getItem('Episodes'))
   }
 }
 </script>
 <!-- Add "scoped" attribute to limit CSS to this component only -->
 <style scoped>
+button {
+  background-color: #f44336;; /* Green */
+  border: none;
+  color: white;
+  padding: 15px 32px;
+  text-align: center;
+  text-decoration: none;
+  display: inline-block;
+  font-size: 16px;
+}
 .Item_Image{    display: block;
     overflow: hidden;
     max-height: 11em;}
@@ -233,7 +304,7 @@ img{width: 100% ;}
     min-width: auto;
     text-align: left;
 }
-  #Counter_Div{float: right;clear: both;}
+  #Counter_Div{float: right;clear: both;margin-right: 1em;}
   /*Heart shape*/
   .heart-shape{
   position: relative;
@@ -269,7 +340,13 @@ img{width: 100% ;}
   -o-transform: rotate(45deg);
   transform: rotate(45deg);
 }
-
+tr:nth-child(even){background-color: wheat;}
+tr:nth-child(odd){background-color: white;}
+td{border-collapse: collapse}
 #Spinner{    margin: auto;
     width: 8%;}
+@media only screen and (max-width: 660px) {
+  .Serial{width: 6em;
+    height: 13em;}
+}
 </style>
